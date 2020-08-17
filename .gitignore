@@ -83,6 +83,11 @@ venv/
 ENV/ 
 env.bak/ 
 venv.bak/ 
+bin/
+include/
+share/
+lib/
+lib64/
 
 # mkdocs documentation 
 /site 

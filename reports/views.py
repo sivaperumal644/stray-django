@@ -46,3 +46,19 @@ def list_reports(request):
     reports = CitizenReport.objects.all()
     # reports = list(reports)
     return ReportResponse(report_list=reports).json()
+
+
+@require_POST
+def update_status(request):
+    report_id = request.POST.get('id', None)
+    status_to_change_to = request.POST.get('status', None)
+    if not report_id or not status_to_change_to:
+        return responses.StandardResponse(error_code=(errors.INVALID_PARAMS, 'Please provide report id in id parameter and status in status parameter')).json()
+    try:
+        report = CitizenReport.objects.get(pk=int(report_id))
+        report.status = status_to_change_to
+        report.save()
+    except expression as identifier:
+        print(e)
+        return responses.StandardResponse(error_code=errors.SOMETHING_WENT_WRONG).json()
+    return responses.SuccessResponse(action_name='UPDATE_REPORT_STATUS').json()
