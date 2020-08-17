@@ -28,14 +28,23 @@
   <body>
     <style>
       header {
-        display: block;
+        display: flex;
         height: 64px;
+        text-align: center;
+        letter-spacing: 0.4rem;
+        font-family: "Roboto", "Ubuntu", "Arial", "Courier New", Courier,
+          "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 200;
+        justify-content: center;
+        align-items: center;
       }
       .body {
         display: flex;
         flex-direction: column;
         height: 100vh;
         width: 100vw;
+        font-family: "Roboto", "Ubuntu", "Arial", "Courier New", Courier,
+          "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
       main {
         display: flex;
@@ -72,7 +81,16 @@
     </style>
     <div class="body">
       <header>
-        <h1>Stray Cattle Map View</h1>
+        <h1
+          style="
+            font-weight: 400;
+            padding: 0;
+            margin: 0;
+            text-transform: uppercase;
+          "
+        >
+          Stray Cattle Map View
+        </h1>
       </header>
       <main>
         <div class="mapcontainer">
@@ -128,7 +146,7 @@
             style:
               "https://tiles.locationiq.com/v2/streets/vector.json?key=" +
               locationiqKey,
-            zoom: 12,
+            zoom: 6,
             center: [lon, lat],
           });
         }
@@ -156,20 +174,19 @@
         });
       }
 
-      setInterval(
-        async () => {
-          let url = "https://stray-cattle-sp.herokuapp.com/reports/list";
-          // let url = "http://localhost:8000/reports/list";
-          let response = await fetch(url);
-          if (response.ok) {
-            let json = await response.json();
-            console.log(json);
-            updateMarkers(json.data.values);
-          }
-        },
-        10000,
-        true
-      );
+      async function fetchAndUpdate() {
+        let url = "https://stray-cattle-sp.herokuapp.com/reports/list";
+        // let url = "http://localhost:8000/reports/list";
+        let response = await fetch(url);
+        if (response.ok) {
+          let json = await response.json();
+          console.log(json);
+          updateMarkers(json.data.values);
+        }
+      }
+      fetchAndUpdate();
+
+      setInterval(fetchAndUpdate, 10000, true);
 
       //   //Add markers from geojson. This list can be generated dynamically with an AJAX call as well.
       //   var geojson = {
