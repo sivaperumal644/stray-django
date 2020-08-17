@@ -61,6 +61,14 @@
         height: 100%;
         position: relative;
       }
+      aside {
+        padding: 16px;
+        width: 30vw;
+      }
+
+      #reportimage {
+        max-height: 200px;
+      }
     </style>
     <div class="body">
       <header>
@@ -70,96 +78,159 @@
         <div class="mapcontainer">
           <div id="map"></div>
         </div>
-        <aside>
-          Hello
+        <aside id="side" style="display: none;">
+          <div class="info">
+            <img id="reportimage" src="" alt="" />
+            <h2 id="reportaddress">
+              Address
+            </h2>
+          </div>
         </aside>
       </main>
     </div>
     <script>
-      var reports = [];
-      var markerlist = [];
-      setInterval(async () => {
-        let response = await fetch(
-          "https://stray-cattle-sp.herokuapp.com/reports/list"
-        );
-        if (response.ok) {
-          let json = await response.json();
-          console.log(json);
-        }
-      }, 1000);
       //Add your LocationIQ Maps Access Token here (not the API token!)
       locationiqKey = "pk.b8898b8569f2766b4183dd0c5c0887bd";
       //Define the map and configure the map's theme
-      var map = new mapboxgl.Map({
-        container: "map",
-        attributionControl: false, //need this to show a compact attribution icon (i) instead of the whole text
-        style:
-          "https://tiles.locationiq.com/v2/streets/vector.json?key=" +
-          locationiqKey,
-        zoom: 12,
-        center: [-122.42, 37.779],
-      });
+      var map = null;
+      var reports = [];
+      var markerlist = [];
 
-      //Add markers from geojson. This list can be generated dynamically with an AJAX call as well.
-      var geojson = {
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: {
-              message: "Foo",
-              iconSize: [60, 60],
-            },
-            geometry: {
-              type: "Point",
-              coordinates: [-122.421953, 37.764966],
-            },
-          },
-          {
-            type: "Feature",
-            properties: {
-              message: "Bar",
-              iconSize: [50, 50],
-            },
-            geometry: {
-              type: "Point",
-              coordinates: [-122.464677, 37.777209],
-            },
-          },
-          {
-            type: "Feature",
-            properties: {
-              message: "Baz",
-              iconSize: [40, 40],
-            },
-            geometry: {
-              type: "Point",
-              coordinates: [-122.484948, 37.78009],
-            },
-          },
-        ],
-      };
+      var sideEl = document.querySelector("#side");
+      var loadingEl = document.querySelector(".loading");
+      var infoEl = document.querySelector(".info");
+      var reportImageEl = document.querySelector("#reportimage");
+      var reportAddressEl = document.querySelector("#reportaddress");
+
+      async function onMarkerClicked(id) {
+        let item = reports[id];
+        let images = JSON.parse(item.images);
+        sideEl.style.display = "block";
+        reportImageEl.setAttribute("src", images[0]);
+        let addressResponse = await fetch(
+          `https://us1.locationiq.com/v1/reverse.php?key=3039b1865ac919&lat=${item.latitude}&lon=${item.longitude}&format=json`
+        );
+        if (addressResponse.ok) {
+          let json = await addressResponse.json();
+          reportAddressEl.innerHTML = json.display_name;
+        }
+      }
+
+      function updateMarkers(list) {
+        reports = list;
+        if (map == null) {
+          let item = list[0];
+          let lat = parseFloat(item.latitude);
+          let lon = parseFloat(item.longitude);
+          map = new mapboxgl.Map({
+            container: "map",
+            attributionControl: false, //need this to show a compact attribution icon (i) instead of the whole text
+            style:
+              "https://tiles.locationiq.com/v2/streets/vector.json?key=" +
+              locationiqKey,
+            zoom: 12,
+            center: [lon, lat],
+          });
+        }
+        markerlist.forEach((marker) => {
+          marker.remove();
+        });
+        markerlist = [];
+        list.forEach((item, index) => {
+          lat = parseFloat(item.latitude);
+          lon = parseFloat(item.longitude);
+          let el = document.createElement("div");
+          el.className = "marker";
+          el.style.background = item.status === "unread" ? "red" : "green";
+          el.style.width = "50px";
+          el.style.height = "50px";
+          el.addEventListener("click", () => {
+            onMarkerClicked(index);
+          });
+
+          let marker = new mapboxgl.Marker(el);
+          console.info(lon, lat);
+          marker.setLngLat([lon, lat]);
+          marker.addTo(map);
+          markerlist.push(marker);
+        });
+      }
+
+      setInterval(
+        async () => {
+          let url = "https://stray-cattle-sp.herokuapp.com/reports/list";
+          // let url = "http://localhost:8000/reports/list";
+          let response = await fetch(url);
+          if (response.ok) {
+            let json = await response.json();
+            console.log(json);
+            updateMarkers(json.data.values);
+          }
+        },
+        10000,
+        true
+      );
+
+      //   //Add markers from geojson. This list can be generated dynamically with an AJAX call as well.
+      //   var geojson = {
+      //     type: "FeatureCollection",
+      //     features: [
+      //       {
+      //         type: "Feature",
+      //         properties: {
+      //           message: "Foo",
+      //           iconSize: [60, 60],
+      //         },
+      //         geometry: {
+      //           type: "Point",
+      //           coordinates: [-122.421953, 37.764966],
+      //         },
+      //       },
+      //       {
+      //         type: "Feature",
+      //         properties: {
+      //           message: "Bar",
+      //           iconSize: [50, 50],
+      //         },
+      //         geometry: {
+      //           type: "Point",
+      //           coordinates: [-122.464677, 37.777209],
+      //         },
+      //       },
+      //       {
+      //         type: "Feature",
+      //         properties: {
+      //           message: "Baz",
+      //           iconSize: [40, 40],
+      //         },
+      //         geometry: {
+      //           type: "Point",
+      //           coordinates: [-122.484948, 37.78009],
+      //         },
+      //       },
+      //     ],
+      //   };
 
       //Add markers to map
       //https://www.mapbox.com/mapbox-gl-js/api#marker
-      geojson.features.forEach(function (marker) {
-        // create a DOM element for the marker
-        var el = document.createElement("div");
-        el.className = "marker";
-        el.style.background = "red";
-        el.style.width = "50px";
-        el.style.height = "50px";
+      //   geojson.features.forEach(function (marker) {
+      //     // create a DOM element for the marker
+      //     var el = document.createElement("div");
+      //     el.className = "marker";
+      //     el.style.background = "red";
+      //     el.style.width = "50px";
+      //     el.style.height = "50px";
 
-        //Instead of this click listener, we can attach a popup / infowindow to this marker (see next section)
-        el.addEventListener("click", function () {
-          window.alert(marker.properties.message);
-        });
+      //     //Instead of this click listener, we can attach a popup / infowindow to this marker (see next section)
+      //     el.addEventListener("click", function () {
+      //       window.alert(marker.properties.message);
+      //     });
 
-        // add marker to map
-        new mapboxgl.Marker(el)
-          .setLngLat(marker.geometry.coordinates)
-          .addTo(map);
-      });
+      //     // add marker to map
+      //     new mapboxgl.Marker(el)
+      //       .setLngLat(marker.geometry.coordinates)
+      //       .addTo(map);
+      //   });
     </script>
   </body>
 </html>
