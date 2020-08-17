@@ -16,7 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from reports import views
+from django.views.generic import TemplateView
+
 urlpatterns = [
     path('add', views.add_report),
-    path('list', views.list_reports)
+    path('list', views.list_reports),
+    path('map', TemplateView.as_view(template_name='mapview.html')),
+
 ]
