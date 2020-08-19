@@ -94,7 +94,11 @@
       </header>
       <main>
         <div class="mapcontainer">
-          <div id="map"></div>
+          <div id="map">
+            <h3 class="loading">
+              No reports yet
+            </h3>
+          </div>
         </div>
         <aside id="side" style="display: none;">
           <div class="info">
@@ -146,9 +150,10 @@
             style:
               "https://tiles.locationiq.com/v2/streets/vector.json?key=" +
               locationiqKey,
-            zoom: 6,
+            zoom: 12,
             center: [lon, lat],
           });
+          loadingEl.innerHTML = "";
         }
         markerlist.forEach((marker) => {
           marker.remove();
@@ -186,7 +191,7 @@
       }
       fetchAndUpdate();
 
-      setInterval(fetchAndUpdate, 10000, true);
+      setInterval(fetchAndUpdate, 2000, true);
 
       //   //Add markers from geojson. This list can be generated dynamically with an AJAX call as well.
       //   var geojson = {
